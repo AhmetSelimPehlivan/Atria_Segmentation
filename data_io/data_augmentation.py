@@ -4,7 +4,7 @@ import random
 
 import numpy as np
 import torch
-from scipy.misc import imresize
+from PIL import Image
 from skimage import transform as sktform
 
 
@@ -96,13 +96,14 @@ class RandomCropNumpy(object):
         y1 = self.random_state.randint(0, h - th)
         return img[:,x1:x1 + tw, y1: y1 + th],mask[x1:x1 + tw, y1: y1 + th]
 
-
-
-
-from torchsample.transforms import RandomAffine
+from torchvision import transforms
 class Affine(object):
     def __call__(self,image,label=None):
-        tform = RandomAffine(rotation_range=10, translation_range=[0.1,0.1], zoom_range=(0.7, 1.3),interp=['bilinear','nearest'])
+        tform = transforms.Compose([
+        tform.Resize((256, 256)),
+        tform.RandomHorizontalFlip(),
+        tform.ToTensor(),
+        ])
         img = image
         img = torch.from_numpy(img.copy()).float()
         mask = np.expand_dims(label, 0)
@@ -149,22 +150,38 @@ class RandomGammaCorrection(object):
 
 
 class Resize(object):
-    def __init__(self, newh,neww,intep):
+    def __init__(self, newh, neww, interp):
         self.h = newh
         self.w = neww
-        self.intep=intep  #'bilinear' 'nearest']
-        assert len(self.intep)==2
+        self.interp = interp  # ['bilinear', 'nearest']
+        assert len(self.interp) == 2
 
     def __call__(self, img, mask):
-        if len(img.shape)==2 and len(mask.shape)==2:
-            out_image = imresize(img[:,:], (self.h, self.w), interp=self.intep[0])
-            out_mask = imresize(mask, (self.h, self.w), interp=self.intep[1])
-        if len(img.shape)==3 and len(mask.shape)==2:
-            out_image = imresize(img[0, :, :], (self.h, self.w), interp=self.intep[0])
-            out_mask = imresize(mask, (self.h, self.w), interp=self.intep[1])
-            out_image=out_image.reshape((1,out_image.shape[0],out_image.shape[2]))
+        # Interpolation method mapping
+        interp_methods = {
+            'bilinear': Image.BILINEAR,
+            'nearest': Image.NEAREST
+        }
 
-        return out_image,out_mask
+        # Convert image to PIL format if it's a numpy array
+        img_pil = Image.fromarray(img)
+        mask_pil = Image.fromarray(mask)
+
+        # Resize based on the shape of image and mask
+        if len(img.shape) == 2 and len(mask.shape) == 2:
+            out_image = img_pil.resize((self.w, self.h), interp_methods[self.interp[0]])
+            out_mask = mask_pil.resize((self.w, self.h), interp_methods[self.interp[1]])
+
+        if len(img.shape) == 3 and len(mask.shape) == 2:
+            out_image = img_pil.resize((self.w, self.h), interp_methods[self.interp[0]])
+            out_mask = mask_pil.resize((self.w, self.h), interp_methods[self.interp[1]])
+            out_image = np.array(out_image).reshape((1, out_image.size[1], out_image.size[0]))
+
+        # Convert back to numpy array before returning
+        out_image = np.array(out_image)
+        out_mask = np.array(out_mask)
+
+        return out_image, out_mask
 
 
 class ScaleImage(object):
