@@ -96,24 +96,26 @@ class RandomCropNumpy(object):
         y1 = self.random_state.randint(0, h - th)
         return img[:,x1:x1 + tw, y1: y1 + th],mask[x1:x1 + tw, y1: y1 + th]
 
-from torchvision import transforms
+import albumentations as A
+
 class Affine(object):
-    def __call__(self,image,label=None):
-        tform = transforms.Compose([
-        tform.Resize((256, 256)),
-        tform.RandomHorizontalFlip(),
-        tform.ToTensor(),
+    def __call__(self, image, label=None):
+        transform = A.Compose([
+            A.Affine(
+                rotate=(-10, 10),
+                translate_percent=(0.1, 0.1),
+                scale=(0.7, 1.3),
+                shear=(-10, 10),
+                interpolation=1,
+                mode=0
+            ),
         ])
-        img = image
-        img = torch.from_numpy(img.copy()).float()
-        mask = np.expand_dims(label, 0)
-        mask = torch.from_numpy(mask.copy()).long()
-        t1_slice_tform, mask_slice_tform = tform(img, mask)
-        img= t1_slice_tform.numpy()
-        mask=mask_slice_tform[0].numpy()
-        image=img
-        mask=mask.astype(int)
-        return image,mask
+        
+        augmented = transform(image=image, mask=label)
+        image = augmented['image']
+        mask = augmented['mask']
+        return image, mask.astype(int)
+
 
 class RandomScale(object):
     def _init__(self, scale,type=None,mode='symmetric'):

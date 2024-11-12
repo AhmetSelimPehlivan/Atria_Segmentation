@@ -5,12 +5,9 @@ import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
-from torch.autograd import Variable
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 import torch
-
-
 from networks.utils import get_scheduler,cal_cls_acc
 from networks.multi_task_unet import MT_Net
 from networks.myloss import  cross_entropy_2D
@@ -83,10 +80,11 @@ def train_net(sequence,orientation,root_dir,model_name,net,n_classes,csv_path, e
             if batch_size==0:
                 batch_size=1
             # Setup Dataloader
+            print(root_dir)
             train_dataset = AtriaDataset(root_dir, if_subsequent=sequence,sequence_length=options.sequence_length,split='train',extra_label_csv_path=csv_path,extra_label=True,augmentation=True,input_h=h,input_w=w,preload_data=False,if_clahe=if_clahe,if_gamma_correction=if_gamma_correction,if_mip=if_mip,orientation=orientation)
-            train_loader = DataLoader(dataset=train_dataset,num_workers=16, batch_size=batch_size, shuffle=True)
+            train_loader = DataLoader(dataset=train_dataset,num_workers=0, batch_size=batch_size, shuffle=True)
             test_dataset = AtriaDataset(root_dir, if_subsequent=sequence,split='validate',sequence_length=options.sequence_length,extra_label_csv_path=csv_path,extra_label=True,augmentation=True,input_h=h,input_w=w, preload_data=True,if_clahe=if_clahe,if_gamma_correction=if_gamma_correction,if_mip=if_mip,orientation=orientation)
-            test_loader = DataLoader(dataset=test_dataset, num_workers=16, batch_size=batch_size, shuffle=True)
+            test_loader = DataLoader(dataset=test_dataset, num_workers=0, batch_size=batch_size, shuffle=True)
 
             print('''
                              Starting training:
@@ -105,14 +103,15 @@ def train_net(sequence,orientation,root_dir,model_name,net,n_classes,csv_path, e
                 images = data['input']
                 labels = data['target']
                 gt_pa_label =  data['post_ablation']
+                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
                 if gpu:
-                    images = Variable(images.cuda())
-                    labels = Variable(labels.cuda())
-                    gt_pa_label = Variable(gt_pa_label.cuda())
+                    images = images.to(device)
+                    labels = labels.to(device)
+                    gt_pa_label = gt_pa_label.to(device)
                 else:
-                    images = Variable(images)
-                    labels = Variable(labels)
-                    gt_pa_label = Variable(gt_pa_label)
+                    images = images.to(device)
+                    labels = labels.to(device)
+                    gt_pa_label = gt_pa_label
 
                 optimizer.zero_grad()
                 if isinstance(net, torch.nn.DataParallel):
@@ -143,11 +142,11 @@ def train_net(sequence,orientation,root_dir,model_name,net,n_classes,csv_path, e
                 labels_val = data['target']
                 gt_pa_label = data['post_ablation']
                 if gpu:
-                    images_val = Variable(images_val.cuda())
-                    labels_val = Variable(labels_val.cuda())
+                    images_val = images_val.to(device)
+                    labels_val = labels_val.to(device)
                 else:
-                    images_val = Variable(images_val)
-                    labels_val = Variable(labels_val)
+                    images_val = images_val
+                    labels_val = labels_val
 
                 with torch.no_grad():
                     outputs = net(images_val)
@@ -189,7 +188,7 @@ if __name__ == '__main__':
         parser = OptionParser()
         parser.add_option('--root_dir', dest='root_dir', default='/vol/medic01/users/cc215/data/AtriaSeg_2018_training/dataset', type=str,
                           help='dataset_path')
-        parser.add_option('-e', '--epochs', dest='epochs', default=2000, type='int',
+        parser.add_option('-e', '--epochs', dest='epochs', default=20, type='int',
                           help='number of epochs')
         parser.add_option( '--n_classes', dest='n_classes', default=2, type='int',
                           help='number of class')
@@ -239,7 +238,8 @@ if __name__ == '__main__':
         if options.gpu:
             gpu_id_list=[i for i in range(options.n_gpu)]
             net = torch.nn.DataParallel(net, device_ids=gpu_id_list)
-            net.cuda()
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            net.to(device)
             cudnn.benchmark = True
         if options.gamma:
             print ('gamma correction:'+str(options.gamma))

@@ -5,7 +5,6 @@ import torch.utils.data as data
 import datetime
 from skimage.exposure import equalize_adapthist
 import SimpleITK as sitk
-
 from data_io.utils import merge_mip_stack
 from common.file_io import load_nrrd
 from data_io.my_transformer import CropPad
@@ -74,7 +73,7 @@ class AtriaDataset(data.Dataset):
         else:
             input = np.copy(self.raw_images[index])
             target = np.copy(self.raw_labels[index])
-
+            
         target=np.uint8(target)
         target[target>=1]=1 # binary
         has_object=1 if np.sum(target)>0 else 0
@@ -120,7 +119,7 @@ class AtriaDataset(data.Dataset):
         target = target[id, :, :]
 
         original_data = input.copy()
-        temp_input = np.zeros(input.shape,dtype=np.float)
+        temp_input = np.zeros(input.shape,dtype=np.float64)
         for i in range(input.shape[0]):
             if self.gamma_correction:
                 input[i]=automatic_gamma_correction(input[i])
@@ -156,7 +155,7 @@ class AtriaDataset(data.Dataset):
         else:
             patient_name=self.patient_path_list[index].split('/')[-1]
             post_ablation=self.df[self.df['Patient Code']==patient_name]['post_ablation?'].values[0]
-            post_ablation = np.bool( post_ablation)
+            post_ablation = np.array(post_ablation, dtype=bool)
             class_label=1 if post_ablation is True  else 0
             # print (class_label)
             return {'input': input, 'target':  target,'p_name':patient_name, 'post_ablation':class_label,'has_object':has_object}
@@ -181,7 +180,8 @@ class AtriaDataset(data.Dataset):
         result_image = np.zeros((image.shape[0], input_h, input_w), dtype=np.float32)
 
         ##data augmentation
-        data_aug = Compose([RandomVerticalFlip(),RandomHorizontallyFlip(), Affine(),RandomGammaCorrection()])
+        #data_aug = Compose([RandomVerticalFlip(),RandomHorizontallyFlip(), Affine(),RandomGammaCorrection()])
+        data_aug = Compose([RandomVerticalFlip(),RandomHorizontallyFlip(), RandomGammaCorrection()])
         if self.augmentation:
             image, label = data_aug(image, label)
 

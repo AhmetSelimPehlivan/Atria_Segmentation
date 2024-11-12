@@ -14,6 +14,7 @@ def bilinear_additive_upsampling(x, output_channel_num ):
     assert input_channel>output_channel_num
     assert input_channel % output_channel_num == 0, 'input channel must could be equally divided by output_channel_num '
     channel_split = int(input_channel / output_channel_num)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     print (channel_split)
 
@@ -30,7 +31,7 @@ def bilinear_additive_upsampling(x, output_channel_num ):
         result[:,i,:,:]=torch.sum(splited_upsampled_x,1)
 
     ## by default, should be cuda tensor.
-    result=result.cuda()
+    result=result.to(device)
     return result
 
 

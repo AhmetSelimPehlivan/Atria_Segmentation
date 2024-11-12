@@ -99,7 +99,7 @@ if __name__=='__main__':
     model = MT_Net(n_channels=1, n_classes=2, spp_grid=[8, 4, 1])
     init_weights(model,'xavier')
     model.eval()
-    image = torch.autograd.Variable(torch.rand(8, 1, 256, 256))
+    image = torch.rand(8, 1, 256, 256)
     with torch.no_grad():
         segoutput=model(image)
     print(model.predict(image).size())

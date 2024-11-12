@@ -108,8 +108,9 @@ class GradientReversalLayer(nn.Module):
     def __init__(self, Lambda, use_cuda=False):
         super(GradientReversalLayer, self).__init__()
         self.Lambda = Lambda
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         if use_cuda:
-            self.cuda()
+            self.to(device)
 
     def forward(self, input):
         return GradientReversalFunction(self.Lambda)(input)

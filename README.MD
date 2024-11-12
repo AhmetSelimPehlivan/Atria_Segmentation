@@ -56,7 +56,8 @@ isbn="978-3-030-12029-0"
 # Test
 - You can eiter use a single model to predict:
     - open terminal under project dir,
-    - type: `python predict_nrrd.py --model $model_path$  --input $test_dataset$ --save_name $predicted_result_name$ --force_norm`
+    - type: `python predict_nrrd.py --model "/Users/asp/Desktop/ITUYL/2024-2025 Fall/BLG 563E/atria_segmentation_2018/models/atria_model.pkl"  --input "/Users/asp/Desktop/ITUYL/2024-2025 Fall/BLG 563E/atria_segmentation_2018/data/test" --save_name "first_result" --force_norm`
+    python predict_nrrd.py --model $model_path$  --input $test_dataset$ --save_name $predicted_result_name$ --force_norm
         - model_path: the path you saved your trained model for predicting.
         - test_dataset: the path where you unzipped the testing data.
             - test_dataset
@@ -88,7 +89,7 @@ isbn="978-3-030-12029-0"
     - $csv_path$: specifies an csv file path which contains extra pre/post ablation label for each patient. This file should be download with the training data. Or you can find it under the $data directory.
 
         - e.g. `python  train_atria_seg_mt.py --name 'atria_mt_model'  --root_dir 'home/AtriaSeg_2018_training/cross_validation_dataset/0' --csv_path 'home/AtriaSeg_2018_training/data/pre post ablation recrods.csv'`
-
+`python  train_atria_seg.py --name 'atria_model'  --root_dir '/Users/asp/Desktop/ITUYL/2024-2025 Fall/BLG 563E/atria_segmentation_2018/data' --csv_path '/Users/asp/Desktop/ITUYL/2024-2025 Fall/BLG 563E/atria_segmentation_2018/data/pre post ablation recrods.csv'`
 
 # Visualization of training and validation loss and iou during training procedure.
 - open a new terminal under your project dir before training.

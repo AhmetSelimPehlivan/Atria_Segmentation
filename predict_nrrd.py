@@ -167,11 +167,9 @@ def predict_img(sequence,if_mip,if_gamma,if_clahe, n_classes,full_img, batch_siz
         print('tor',torch_batch_data.shape)
         if torch.cuda.is_available():
             net.cuda(0)
-
-            images = Variable(torch_batch_data.cuda(0),volatile=True)
+            images = torch_batch_data.cuda(0)
         else:
-
-            images = Variable(torch_batch_data,volatile=True)
+            images = torch_batch_data
 
         ## predict
         if isinstance(net,torch.nn.DataParallel):
@@ -228,6 +226,7 @@ if __name__ == "__main__":
                       default='bilinear')
 
     args = parser.parse_args()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Using model file : {}".format(args.model))
 
 
@@ -273,7 +272,7 @@ if __name__ == "__main__":
     net = torch.nn.DataParallel(net, device_ids=[0])
     try:
         print("Using CUDA version of the net, prepare your GPU !")
-        net.cuda()
+        net.to(device)
     except:
         raise NotImplementedError
     print("Model loaded !")

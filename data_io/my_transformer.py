@@ -23,6 +23,7 @@ class CropPad(object):
             else:
                 x,y=img.shape[0],img.shape[1]
         else:
+            print(img.shape)
             x, y = img.shape[0], img.shape[1]
 
         x_s = (x - self.target_h) // 2

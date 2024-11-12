@@ -63,3 +63,4 @@ models/*
 runs/
 *.pyc
 *.pth
+data

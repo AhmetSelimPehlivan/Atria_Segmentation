@@ -14,7 +14,7 @@ from predict_nrrd import preprocess_image
 
 if __name__=='__main__':
 
-
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     hard_ensemble=False # if set to be false,we then use aggregated prob instead of max-voting to get more smoothed result
     gpu=True
     model_dict = {
@@ -54,7 +54,7 @@ if __name__=='__main__':
             model.load_state_dict(cache['model_state'])
             if gpu:
                 model = torch.nn.DataParallel(model, device_ids=[0])
-                model.cuda()
+                model.to(device)
             model.eval()
             model_list.append(model)
 
@@ -74,10 +74,10 @@ if __name__=='__main__':
             torch_batch_data = torch.from_numpy(batch_data).float()
             print('tor', torch_batch_data.shape)
             if torch.cuda.is_available():
-                images = Variable(torch_batch_data.cuda(0), volatile=True)
+                images = torch_batch_data.cuda(0)
             else:
 
-                images = Variable(torch_batch_data, volatile=True)
+                images = torch_batch_data
             ## multi predict:
             count=0
             for model in model_list:

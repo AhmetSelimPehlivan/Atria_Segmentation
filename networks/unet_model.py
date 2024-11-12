@@ -140,5 +140,5 @@ if __name__ == '__main__':
     model = UNet(n_channels=1,n_classes=4)
     model.eval()
     print (list(model.named_children()))
-    image = torch.autograd.Variable(torch.randn(1, 1, 512, 512), volatile=True)
+    image = torch.randn(1, 1, 512, 512)
     print (model(image)[0].size())
